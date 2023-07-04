@@ -1,0 +1,73 @@
+version: "2.4"
+
+services:
+  frontend:
+    image: ${DOCKER_REGISTRY_FOR_PUBLISH}/${YOUR_GROUP_PROJECT_NAME}/frontend:${VERSION}
+    environment:
+      NGINX_PROJECT_TEMPLATE_SERVER_BASE_URL: http://server:8080/api
+    ports:
+      - 8081:8081
+    depends_on:
+      - "server"
+    networks:
+      - a12_compose
+
+  server:
+    image: ${DOCKER_REGISTRY_FOR_PUBLISH}/${YOUR_GROUP_PROJECT_NAME}/server:${VERSION}
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      SERVER_ADDRESS: 0.0.0.0
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/your-db-name
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: your-username
+      SPRING_DATASOURCE_PASSWORD: your-password
+      SPRING_JPA_PROPERTIES_HIBERNATE_TEMP_USE_JDBC_METADATA_DEFAULTS: "false"
+      SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQL9Dialect
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI: http://keycloak:8080/realms/A12Realm/protocol/openid-connect/certs
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - a12_compose
+    ports:
+      - 8082:8080
+
+  postgres:
+    image: ${DOCKER_REGISTRY_FOR_READ}/postgres:${POSTGRES_VERSION}
+    ports:
+      - 8083:5432
+    environment:
+      POSTGRES_DB: your-db-name
+      POSTGRES_USER: your-username
+      POSTGRES_PASSWORD: your-password
+    healthcheck:
+      # Checks whether Postgres is ready.
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready --username your-username --dbname your-db-name",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    networks:
+      - a12_compose
+
+  keycloak:
+    image: ${KEYCLOAK_REGISTRY}/keycloak/keycloak:${KEYCLOAK_VERSION}
+    env_file:
+      - keycloak/keycloak.env
+    ports:
+      - 8089:8080
+    volumes:
+      - ./keycloak:/keycloak
+    command: [ "start-dev" , "-Dkeycloak.import=/keycloak/A12Realm.json" ]
+    networks:
+      - a12_compose
+
+networks:
+  a12_compose:
+    driver: bridge

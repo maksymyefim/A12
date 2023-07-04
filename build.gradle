@@ -1,0 +1,115 @@
+plugins {
+    alias(gradlePluginLibs.plugins.docker.remote.api)
+    alias(gradlePluginLibs.plugins.versions.update)
+}
+
+allprojects {
+    apply plugin: 'base'
+}
+
+subprojects {
+    apply {
+        plugin 'maven-publish'
+        plugin 'com.bmuschko.docker-remote-api'
+    }
+
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    if (dockerUseCredentials.toBoolean()) {
+        docker {
+            url = project.findProperty('dockerHost') ?: url.get()
+            registryCredentials {
+                url = dockerRegistryForPublish
+                username = project.repository_username
+                password = project.repository_password
+            }
+        }
+
+        ext.dockerRegistryCredentialsForRead = docker {
+            registryCredentials {
+                url = dockerRegistryForRead
+                username = project.repository_username
+                password = project.repository_password
+            }
+        }
+    }
+
+    ext.calculateShortTag = { String name -> "${rootProject.name}-${name}" }
+    ext.calculateFullTag = { String name -> "${dockerRegistryForPublish}/${group}/${name}:${version}" }
+}
+
+tasks.register('getVersion') {
+    println project.version
+}
+
+tasks.register('getJiraTicket') {
+    if (project.findProperty('jiraTicket')) {
+        println project.jiraTicket
+    }
+}
+
+tasks.register('initProject') {
+    // TODO: Remove these lines below in your project. This is only used for the adapting in the full stack project template.
+    // BEGIN
+    // Only execute on Jenkins
+    if (System.env.BUILD_NUMBER) {
+        allprojects.each { project ->
+            project.dockerRegistryForPublish = 'a12.dockerregistry.mgm-tp.com'
+            project.group = 'com.mgmtp.a12.projecttemplate/full-stack-template-test-only'
+        }
+        ant.propertyfile(file: 'gradle.properties') {
+            entry(key: 'group', value: 'com.mgmtp.a12.projecttemplate/full-stack-template-test-only')
+            entry(key: 'dockerRegistryForPublish', value: 'a12.dockerregistry.mgm-tp.com')
+        }
+    }
+    if (project.hasProperty("testVersion")) {
+        String projectVersion = project.getProperty("testVersion")
+        allprojects.each { project ->
+            project.version = projectVersion
+        }
+        ant.propertyfile(file: 'gradle.properties') {
+            entry(key: 'version', value: projectVersion)
+        }
+        return
+    }
+    // END
+
+    String projectVersion = project.version.split('-')[0].trim()
+    String branchName = System.env.CHANGE_BRANCH ? System.env.CHANGE_BRANCH : System.env.BRANCH_NAME
+    if (System.env.BUILD_NUMBER) {
+        // TODO: We currently keep it simple here to publish only SNAPSHOT version. You should update this pattern to adapt with your project's strategy.
+        projectVersion = projectVersion + "-build${String.format("%05d", Integer.parseInt(System.env.BUILD_NUMBER))}-SNAPSHOT"
+
+        allprojects.each { project ->
+            project.version = projectVersion
+        }
+        ant.propertyfile(file: 'gradle.properties') {
+            entry(key: 'version', value: projectVersion)
+        }
+    }
+}
+
+tasks.register('test') {
+    dependsOn initProject
+}
+
+tasks.register('prerelease') {
+    dependsOn test, initProject
+}
+
+subprojects.each {
+    test.dependsOn it.getTasksByName('test', true)
+    prerelease.dependsOn it.getTasksByName('pushImages', true)
+}
+
+String getJiraTicket(String branchName) {
+    def matcher = branchName =~ /.*((${project.projectJiraCode})-\d{1,6})(-).*/
+    if (matcher.matches()) {
+        matcher.group(1)
+    } else {
+        ""
+    }
+}

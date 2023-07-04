@@ -1,0 +1,63 @@
+rootProject.name = 'training'
+
+include 'client'
+include 'compose'
+include 'server:app'
+include 'server:common'
+include 'server:init'
+
+dependencyResolutionManagement {
+    def springBootVersion = '2.7.3'
+    versionCatalogs {
+        gradlePluginLibs {
+            version('spring-boot', springBootVersion)
+            version('test-logger', '3.2.0')
+            version('docker-compose', '0.16.8')
+            version('docker-remote-api', '7.0.1')
+            version('versions-update', '0.42.0')
+            version('node-gradle', '3.4.0')
+
+            plugin('spring-boot', 'org.springframework.boot').versionRef('spring-boot')
+            plugin('test-logger', 'com.adarshr.test-logger').versionRef('test-logger')
+            plugin('docker-compose', 'com.avast.gradle.docker-compose').versionRef('docker-compose')
+            plugin('docker-remote-api', 'com.bmuschko.docker-remote-api').versionRef('docker-remote-api')
+            plugin('versions-update', 'com.github.ben-manes.versions').versionRef('versions-update')
+            plugin('node-gradle', 'com.github.node-gradle.node').versionRef('node-gradle')
+        }
+
+        a12Libs {
+            version('base', '26.3.0')
+            version('form-engine', '35.1.0')
+            version('kernel', '27.5.1')
+            version('uaa', '6.1.2')
+            version('dataservices', '35.0.5')
+
+            library('dataservices-server-app', 'com.mgmtp.a12.dataservices', 'dataservices-server-app').versionRef('dataservices')
+            library('dataservices-server-init-app', 'com.mgmtp.a12.dataservices', 'dataservices-server-init-app').versionRef('dataservices')
+            library('uaa-authentication-user-extension-spring-boot-autoconfigure', 'com.mgmtp.a12.uaa', 'uaa-authentication-user-extension-spring-boot-autoconfigure').versionRef('uaa')
+
+            library('base-bom', 'com.mgmtp.a12.base', 'base-virtual-bom').versionRef('base')
+            library('kernel-bom', 'com.mgmtp.a12.kernel', 'kernel-bom').versionRef('kernel')
+            library('form-engine-bom', 'com.mgmtp.a12.formengine', 'formengine-virtual-bom').versionRef('form-engine')
+            library('uaa-bom', 'com.mgmtp.a12.uaa', 'uaa-bom').versionRef('uaa')
+            library('dataservices-bom', 'com.mgmtp.a12.dataservices', 'dataservices-parent').versionRef('dataservices')
+        }
+
+        libs {
+            version('jaxws', '2.3.3')
+            version('postgresql', '42.5.1')
+            version('spring-boot', springBootVersion)
+
+            library('spring-boot-starter-web', 'org.springframework.boot', 'spring-boot-starter-web').versionRef('spring-boot')
+            library('spring-boot-configuration-processor', 'org.springframework.boot', 'spring-boot-configuration-processor').versionRef('spring-boot')
+            library('spring-boot-devtools', 'org.springframework.boot', 'spring-boot-devtools').versionRef('spring-boot')
+            library('jaxws', 'com.sun.xml.ws', 'jaxws-ri').versionRef('jaxws')
+            library('postgresql', 'org.postgresql', 'postgresql').versionRef('postgresql')
+        }
+
+        testCatalogLibs {
+            version('spring-boot', springBootVersion)
+            library('spring-boot-starter-test', 'org.springframework.boot', 'spring-boot-starter-test').versionRef('spring-boot')
+        }
+    }
+}

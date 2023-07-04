@@ -1,0 +1,28 @@
+roles:
+  - name: admin
+    description: admin role
+    accessRights:
+      - DOCUMENT_READ
+      - DOCUMENT_WRITE
+      - MODEL_READ
+      - MODEL_WRITE
+      - ACCESS_ACTUATOR
+      - PROCESS_DEFINITION_READ
+      - PROCESS_DEFINITION_CREATE_INSTANCE
+      - PROCESS_DEFINITION_READ_HISTORY
+      - PROCESS_DEFINITION_DELETE
+      - PROCESS_DEFINITION_UPDATE
+      - TASK_READ
+      - TASK_UPDATE
+      - TASK_COMPLETE
+      - TASK_ASSIGN
+  - name: systemAdmin
+    description: system admin role
+    accessRights:
+      - ACCESS_ACTUATOR
+      - MANAGE_CACHES
+  - name: guest
+    description: guest role
+    accessRights:
+      - DOCUMENT_READ
+      - MODEL_READ

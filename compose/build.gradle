@@ -1,0 +1,23 @@
+plugins {
+    alias(gradlePluginLibs.plugins.docker.compose)
+}
+
+dockerCompose {
+    captureContainersOutput = true
+    environment.put 'VERSION', "${version}"
+    environment.put 'YOUR_GROUP_PROJECT_NAME', "${group}"
+    environment.put 'DOCKER_REGISTRY_FOR_READ', "${dockerRegistryForRead}"
+    environment.put 'DOCKER_REGISTRY_FOR_PUBLISH', "${dockerRegistryForPublish}"
+
+    postgres {
+        startedServices = ['postgres']
+    }
+
+    keycloak {
+        startedServices = ['keycloak']
+    }
+
+    noclient {
+        startedServices = ['keycloak', 'server', 'postgres']
+    }
+}
